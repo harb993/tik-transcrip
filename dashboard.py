@@ -4,7 +4,7 @@ from flask import Flask, jsonify, render_template_string
 app = Flask(__name__)
 
 HTML_TEMPLATE = """
-<!DOCTYPEhtml>
+<!DOCTYPE html>
 <html>
 <head>
     <title>Terminal Dashboard</title>
