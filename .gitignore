@@ -1,10 +1,24 @@
+# Python cache
 __pycache__/
 *.py[cod]
+
+# Virtual environment
 .venv/
+
+# Video files
 videos/
+
+# CSV and log files
 *.csv
 *.log
+
+# Environment variables
 .env
+
+# Specific files
 downloads/inventory.ini
 data/downloads/
 tiktokdownload.log
+
+# Models folder
+models/
