@@ -12,166 +12,218 @@ TRANSCRIPTS_DIR = os.path.join(DOWNLOADS_DIR, "transcripts")
 LOG_FILE = os.path.join(os.path.dirname(BASE_DIR), "tiktokdownload.log")
 
 HTML_TEMPLATE = """
-<!DOCTYPEhtml>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PIPELINE_DASHBOARD_v1.0</title>
+    <title>AI Categorization Pipeline</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #030303;
-            --main-green: #00ff41;
-            --dark-green: #008f11;
-            --dim-green: #003b00;
+            --bg-color: #0b0f19;
+            --panel-bg: rgba(255, 255, 255, 0.03);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.5);
+            --success: #10b981;
+            --pending: #f59e0b;
         }
+        
         body { 
-            font-family: 'Courier New', Courier, monospace; 
-            background-color: var(--bg); 
-            color: var(--main-green); 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-color); 
+            background-image: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.15), transparent 50%);
+            color: var(--text-main); 
             margin: 0; 
-            padding: 20px; 
+            padding: 24px; 
             display: flex; 
             height: 100vh; 
             box-sizing: border-box; 
             overflow: hidden;
-            text-shadow: 0 0 5px var(--main-green);
-        }
-        /* CRT Scanline effect */
-        body::after {
-            content: " ";
-            display: block;
-            position: absolute;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 2;
-            background-size: 100% 2px, 3px 100%;
-            pointer-events: none;
-        }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: var(--bg); border-left: 1px solid var(--dim-green); }
-        ::-webkit-scrollbar-thumb { background: var(--dark-green); }
-        ::-webkit-scrollbar-thumb:hover { background: var(--main-green); }
-
-        .terminal-box {
-            border: 1px solid var(--main-green);
-            background: rgba(0, 20, 0, 0.2);
-            box-shadow: inset 0 0 10px var(--dim-green);
-            padding: 15px;
-            position: relative;
-        }
-        .terminal-box::before {
-            content: " ";
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 10px;
-            background: linear-gradient(to bottom, rgba(0, 255, 65, 0.2) 0%, transparent 100%);
         }
 
-        .sidebar { width: 300px; display: flex; flex-direction: column; overflow-y: auto; z-index: 3; margin-right: 20px;}
-        .main-content { flex: 1; display: flex; flex-direction: column; gap: 20px; z-index: 3;}
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .sidebar { width: 320px; margin-right: 24px; overflow-y: hidden; z-index: 10; }
+        .main-content { flex: 1; display: flex; flex-direction: column; gap: 24px; z-index: 10; min-width: 0; }
         
-        .top-row { display: flex; gap: 20px; flex: 1; min-height: 40%;}
-        .video-container { flex: 1; text-align: center; display: flex; flex-direction: column;}
+        .top-row { display: flex; gap: 24px; flex: 1; min-height: 50%; }
+        .video-container { flex: 1; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;}
         .transcript-container { flex: 1; display: flex; flex-direction: column;}
+        .log-container { flex: 1; display: flex; flex-direction: column; min-height: 25%; }
+
+        h2 { 
+            margin-top: 0; 
+            font-size: 0.9em; 
+            font-weight: 600; 
+            letter-spacing: 0.05em; 
+            text-transform: uppercase; 
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
         
-        .log-container { flex: 1; display: flex; flex-direction: column; min-height: 30%; }
+        .live-dot {
+            height: 8px; width: 8px;
+            background-color: var(--success);
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 8px var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        #list-container { flex: 1; overflow-y: auto; padding-right: 8px; }
 
         .video-item { 
-            padding: 8px; 
-            border-bottom: 1px dashed var(--dark-green); 
+            padding: 12px 16px; 
+            border-radius: 10px;
+            background: rgba(255,255,255,0.02);
+            margin-bottom: 8px;
             cursor: pointer; 
-            transition: all 0.2s; 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid transparent;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
         }
-        .video-item:hover { background: var(--dim-green); }
-        .video-item.active { background: var(--main-green); color: var(--bg); text-shadow: none; font-weight: bold;}
-        .video-item.active .status-badge { color: var(--bg); border-color: var(--bg); }
+        .video-item:hover { 
+            background: rgba(255,255,255,0.06); 
+            transform: translateY(-1px);
+        }
+        .video-item.active { 
+            background: rgba(59, 130, 246, 0.1); 
+            border-color: rgba(59, 130, 246, 0.3);
+            box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.05);
+        }
+        
+        .vid-name { font-weight: 500; font-size: 0.9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        
+        .status-badge { 
+            align-self: flex-start;
+            padding: 4px 8px; 
+            font-size: 0.7em; 
+            font-weight: 600;
+            border-radius: 20px; 
+            background: rgba(255,255,255,0.1);
+            color: var(--text-muted);
+        }
+        .status-badge.done { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        .status-badge.pending { background: rgba(245, 158, 11, 0.15); color: var(--pending); }
         
         video { 
             width: 100%; 
             height: 100%; 
-            max-height: 400px;
-            background: var(--bg); 
-            border: 1px solid var(--main-green);
-            filter: grayscale(100%) contrast(1.2) sepia(100%) hue-rotate(80deg) saturate(400%) brightness(0.8);
+            max-height: 100%;
+            border-radius: 10px;
+            background: #000; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            outline: none;
         }
         
         .transcript-box { 
             flex: 1; 
             overflow-y: auto; 
             white-space: pre-wrap; 
-            font-size: 0.9em; 
-            line-height: 1.4;
+            font-size: 0.95em; 
+            line-height: 1.6;
+            color: var(--text-main);
+            padding: 16px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
         }
+        
         .log-box {
             flex: 1; 
             overflow-y: auto; 
             white-space: pre-wrap; 
+            font-family: 'Courier New', Courier, monospace;
             font-size: 0.85em; 
-            line-height: 1.3;
+            line-height: 1.5;
+            color: var(--text-muted);
+            padding: 16px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
         }
-
-        h2 { margin-top: 0; font-size: 1.2em; border-bottom: 1px solid var(--main-green); padding-bottom: 5px; text-transform: uppercase;}
-        
-        .status-badge { display: inline-block; padding: 2px 6px; font-size: 0.7em; border: 1px solid var(--main-green); margin-top: 5px; }
-        .blink { animation: blinker 1s linear infinite; }
-        @keyframes blinker { 50% { opacity: 0; } }
-        
-        .header-text { margin-bottom: 15px; font-size: 0.9em;}
     </style>
 </head>
 <body>
-    <div class="sidebar terminal-box" id="video-list">
-        <h2>>> FILESYSTEM</h2>
-        <div class="header-text">SCANNING ./DOWNLOADS...<span class="blink">_</span></div>
-        <div id="list-container">LOADING...</div>
+    <div class="sidebar glass-panel">
+        <h2>Video Queue <span class="live-dot"></span></h2>
+        <div id="list-container">Loading...</div>
     </div>
     
     <div class="main-content">
         <div class="top-row">
-            <div class="video-container terminal-box">
-                <h2>>> VISUAL_FEED</h2>
+            <div class="video-container glass-panel" style="padding: 10px;">
                 <video id="player" controls controlsList="nodownload"></video>
-                <div id="video-info" style="margin-top:10px; font-size:0.8em;">[NO SIGNAL]</div>
             </div>
             
-            <div class="transcript-container terminal-box">
-                <h2>>> NLP_DECODE_TRANSCRIPT</h2>
-                <div id="transcript" class="transcript-box">AWAITING INPUT...</div>
+            <div class="transcript-container glass-panel">
+                <h2>AI Transcript</h2>
+                <div id="transcript" class="transcript-box">Select a video to view its transcript.</div>
             </div>
         </div>
         
-        <div class="log-container terminal-box">
-            <h2>>> BACKEND_SYS_LOGS <span style="font-size:0.6em; float:right;">LIVE<span class="blink">_</span></span></h2>
-            <div id="logs" class="log-box">INITIALIZING...</div>
+        <div class="log-container glass-panel">
+            <h2>System Logs</h2>
+            <div id="logs" class="log-box">Initializing...</div>
         </div>
     </div>
 
     <script>
         let videos = [];
+        let currentActiveId = null;
         
         async function fetchVideos() {
-            const res = await fetch('/api/videos');
-            videos = await res.json();
-            renderList();
+            try {
+                const res = await fetch('/api/videos');
+                videos = await res.json();
+                renderList();
+            } catch(e) {
+                console.error("Failed to fetch videos", e);
+            }
         }
         
         function renderList() {
             const container = document.getElementById('list-container');
             if(videos.length === 0) {
-               container.innerHTML = "NO FILES FOUND.";
+               container.innerHTML = "<div style='color: var(--text-muted); font-size: 0.9em;'>No videos found in downloads folder.</div>";
                return;
             }
             container.innerHTML = '';
             
             videos.forEach(v => {
                 const div = document.createElement('div');
-                div.className = 'video-item';
+                div.className = `video-item ${v.id === currentActiveId ? 'active' : ''}`;
                 div.innerHTML = `
-                    > <span>${v.id}.mp4</span><br>
-                    <span class="status-badge">[${v.has_transcript ? 'NLP: DONE' : 'NLP: PENDING'}]</span>
+                    <div class="vid-name">${v.id}.mp4</div>
+                    <div class="status-badge ${v.has_transcript ? 'done' : 'pending'}">${v.has_transcript ? 'Transcript Ready' : 'Processing...'}</div>
                 `;
                 div.onclick = () => selectVideo(v.id, div);
                 container.appendChild(div);
@@ -179,30 +231,32 @@ HTML_TEMPLATE = """
         }
         
         async function selectVideo(id, element) {
+            currentActiveId = id;
             document.querySelectorAll('.video-item').forEach(el => el.classList.remove('active'));
             element.classList.add('active');
             
             const player = document.getElementById('player');
-            player.src = `/media/${id}.mp4`;
-            document.getElementById('video-info').innerHTML = `PLAYING: <span style="color:white;">${id}.mp4</span>`;
+            if (!player.src.includes(id)) {
+                player.src = `/media/${id}.mp4`;
+                player.play().catch(e => console.log("Autoplay prevented"));
+            }
             
             const transBox = document.getElementById('transcript');
-            transBox.innerText = "DECODING TRANSCRIPT...";
+            transBox.innerHTML = '<span style="color: var(--text-muted)">Loading transcript...</span>';
             
             try {
                 const res = await fetch(`/api/transcript/${id}`);
                 if (res.ok) {
                     const data = await res.json();
-                    transBox.innerText = data.text || "NO TEXT DETECTED.";
+                    transBox.innerText = data.text || "No speech detected in this video.";
                 } else {
-                    transBox.innerText = "[ERROR] TRANSCRIPT NOT FOUND.";
+                    transBox.innerHTML = '<span style="color: var(--text-muted)">Transcript not found or still processing.</span>';
                 }
             } catch (e) {
-                transBox.innerText = "[SYS_ERROR] FETCH FAILED.";
+                transBox.innerText = "Error loading transcript.";
             }
         }
         
-        // Log streaming
         const logBox = document.getElementById('logs');
         let isScrolledToBottom = true;
         
@@ -215,7 +269,7 @@ HTML_TEMPLATE = """
                 const res = await fetch('/api/logs');
                 const data = await res.json();
                 if(data.logs !== logBox.innerText) {
-                    logBox.innerText = data.logs || "NO LOGS GENERATED YET.";
+                    logBox.innerText = data.logs || "No logs available.";
                     if (isScrolledToBottom) {
                         logBox.scrollTop = logBox.scrollHeight;
                     }
@@ -224,7 +278,7 @@ HTML_TEMPLATE = """
         }
         
         setInterval(fetchLogs, 1000);
-        setInterval(fetchVideos, 5000); // refresh list automatically
+        setInterval(fetchVideos, 5000);
         
         fetchVideos();
         fetchLogs();
@@ -232,6 +286,7 @@ HTML_TEMPLATE = """
 </body>
 </html>
 """
+
 
 @app.route('/')
 def index():
