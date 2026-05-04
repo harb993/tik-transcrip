@@ -2,14 +2,14 @@
 
 A high-performance, concurrent pipeline for downloading TikTok videos, transcribing them with AI, and visualizing results through a real-time dashboard.
 
-## 🚀 Features
+##  Features
 
 - **Concurrent Downloader**: Uses `asyncio` and `yt-dlp` for high-speed, watermark-free video downloads.
 - **AI Transcription**: Powered by **Moonshine (ONNX)** for lightning-fast, CPU-optimized Speech-to-Text.
 - **Matrix Dashboard**: A real-time Flask-based web interface to monitor logs, watch videos, and read transcripts.
 - **Robust Pipeline**: Includes automatic retries, exponential backoff, and detailed logging.
 
-## 📁 Repository Structure
+##  Repository Structure
 
 ```text
 .
@@ -44,7 +44,7 @@ A high-performance, concurrent pipeline for downloading TikTok videos, transcrib
    sudo apt update && sudo apt install ffmpeg
    ```
 
-## 📖 Usage
+## Usage
 
 ### 1. Download Videos
 Add your TikTok URLs to `data/urls.txt` (one per line) and run:
@@ -65,10 +65,10 @@ python src/app.py
 ```
 Then open `http://localhost:5002` in your browser.
 
-## ⚙️ Configuration
+##  Configuration
 
 - **Transcription**: The system uses `moonshine/base` by default (stored in `models/`). You can switch to `moonshine/tiny` for even faster performance on low-end hardware.
 - **Concurrency**: Adjust download speed in `src/download_tiktok_videos.py` by modifying the `--concurrency` argument.
 
-## 📝 License
+##  License
 MIT
