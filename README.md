@@ -1,46 +1,74 @@
-# TikTok Video Scraper
+# TikTok Categorization Pipeline
 
-A robust and concurrent tool for downloading TikTok videos in bulk. Designed for reliability and scale, this utility utilizes asynchronous requests and yt-dlp to bypass common bot-detection mechanisms and download watermark-free videos.
+A high-performance, concurrent pipeline for downloading TikTok videos, transcribing them with AI, and visualizing results through a real-time dashboard.
 
-## Features
+## 🚀 Features
 
-- **Asynchronous Execution:** Leverages asyncio to manage concurrent download tasks efficiently.
-- **Bot-Detection Bypass:** Integrates yt-dlp subprocesses to securely fetch direct video streams without triggering CAPTCHAs.
-- **Automatic Retries:** Features configurable exponential backoff strategies for connection timeouts and failures.
-- **Detailed Logging:** Generates comprehensive logs and structured CSV reports of failed downloads.
+- **Concurrent Downloader**: Uses `asyncio` and `yt-dlp` for high-speed, watermark-free video downloads.
+- **AI Transcription**: Powered by **Moonshine (ONNX)** for lightning-fast, CPU-optimized Speech-to-Text.
+- **Matrix Dashboard**: A real-time Flask-based web interface to monitor logs, watch videos, and read transcripts.
+- **Robust Pipeline**: Includes automatic retries, exponential backoff, and detailed logging.
 
-## Installation
+## 📁 Repository Structure
 
-1. Clone the repository or incorporate this module into your pipeline.
-2. Install the required Python dependencies:
+```text
+.
+├── src/
+│   ├── download_tiktok_videos.py  # Primary downloader script
+│   ├── transcribe_videos.py       # Moonshine STT transcription script
+│   └── app.py                     # Flask Dashboard
+├── data/
+│   ├── urls.txt                   # Input URLs list
+│   └── downloads/                 # Downloaded videos (.mp4)
+│       └── transcripts/           # Generated transcripts (.json)
+├── models/                        # Local Moonshine ONNX models
+└── requirements.txt               # Dependencies
+```
+
+## 🛠️ Installation
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/harb993/Categorization_pipeline.git
+   cd Categorization_pipeline
+   ```
+
+2. **Install dependencies**:
    ```bash
    pip install -r requirements.txt
    ```
-3. Ensure yt-dlp is installed and available in your environment:
+
+3. **External Dependencies**:
+   Ensure `ffmpeg` is installed on your system for audio extraction:
    ```bash
-   pip install yt-dlp
+   sudo apt update && sudo apt install ffmpeg
    ```
 
-## Usage
+## 📖 Usage
 
-Provide a list of valid TikTok video URLs in a text file (e.g., `data/urls.txt`), one per line. Execute the application with the desired arguments:
-
+### 1. Download Videos
+Add your TikTok URLs to `data/urls.txt` (one per line) and run:
 ```bash
-python src/downloader.py \
-  --url-file data/urls.txt \
-  --download-dir data/downloads \
-  --batch-size 20 \
-  --concurrency 5 \
-  --min-delay 1.0 \
-  --max-delay 3.0
+python src/download_tiktok_videos.py
 ```
 
-## Configuration Parameters
+### 2. Transcribe Videos
+Process the downloaded videos to extract text using Moonshine:
+```bash
+python src/transcribe_videos.py
+```
 
-- `--url-file`: Path to the input text file containing URLs.
-- `--download-dir`: Target directory for saved video files.
-- `--batch-size`: Number of URLs to process in a single batch.
-- `--concurrency`: Maximum number of concurrent download processes.
-- `--min-delay`: Minimum wait time (in seconds) between batches.
-- `--max-delay`: Maximum wait time (in seconds) between batches.
-- `--user-agent`: Custom User-Agent string for HTTP requests.
+### 3. Launch Dashboard
+Visualize your pipeline and results in real-time:
+```bash
+python src/app.py
+```
+Then open `http://localhost:5002` in your browser.
+
+## ⚙️ Configuration
+
+- **Transcription**: The system uses `moonshine/base` by default (stored in `models/`). You can switch to `moonshine/tiny` for even faster performance on low-end hardware.
+- **Concurrency**: Adjust download speed in `src/download_tiktok_videos.py` by modifying the `--concurrency` argument.
+
+## 📝 License
+MIT
